@@ -46,7 +46,7 @@ curl -X GET http://localhost:5000/api/users/profile \
 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzM1NzQzMDk4LCJleHAiOjE3MzU3NDY2OTh9.h2-iJEGnCei2LDOJnLZnr9NRTtS8SK8d5FcE1RpPtDo"
 
 ####
-curl -X GET http://localhost:5000/api/questions/105/answers
+curl -X GET https://qna-backendv2.up.railway.app/api/questions/105/answers
 
 ####
 curl -X POST http://localhost:5000/api/answers/127/answers \
@@ -230,14 +230,13 @@ curl -X PUT http://localhost:5000/api/questions/87/update \
 }'
 
 ####
-curl -X POST http://localhost:5000/api/questions/search \
+curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/search \
 -H "Content-Type: application/json" \
 -d '{"q": "test believe permisi wa"}'
 
 
 ####
-curl -X GET https://qnavbackend.vercel.app/api/questions \
--H "Origin: https://qnavfrontend.vercel.app" \
+curl -X GET https://qna-backendv2.up.railway.app/api/questions \
 -H "Content-Type: application/json"
 
 

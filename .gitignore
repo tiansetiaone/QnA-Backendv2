@@ -1,0 +1,7 @@
+.vercel
+whatsapp/.wwebjs_auth/
+whatsapp/.wwebjs_cache/
+node_modules/
+*.log
+.tmp/
+
