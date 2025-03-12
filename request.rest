@@ -253,7 +253,7 @@ curl -v -X GET http://localhost:5000/api/get-qr -H "Content-Type: application/js
 curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/find \
 -H "Content-Type: application/json" \
 -d '{
-  "question": "test pertanyaan di hosting"
+  "question": "test"
 }'
 
 ####
@@ -365,7 +365,7 @@ curl -X POST http://localhost:5000/api/group-keywords/add \
 
 
 ####
-curl -X POST https://qna-backendv2-production.up.railway.app/api/auth/login \
+curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
 -d '{"username":"Admin Kece","password":"111"}'
 
