@@ -365,7 +365,7 @@ curl -X POST http://localhost:5000/api/group-keywords/add \
 
 
 ####
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST https://qna-backendv2-production.up.railway.app/api/auth/login \
 -H "Content-Type: application/json" \
 -d '{"username":"Admin Kece","password":"111"}'
 
