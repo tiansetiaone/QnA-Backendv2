@@ -236,12 +236,12 @@ curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/searc
 
 
 ####
-curl -X GET https://qna-backendv2.up.railway.app/api/questions \
+curl -X GET https://qna-backendv2-production.up.railway.app/api/questions \
 -H "Content-Type: application/json"
 
 
 ####
-curl -X POST https://qnavbackend.vercel.app/api/users/register \
+curl -X POST https://qna-backendv2-production.up.railway.app/api/users/register \
 -H "Content-Type: application/json" \
 -d '{"username":"TheUsed", "whatsapp_number": "08177234567790", "password":"password123"}'
 
@@ -250,14 +250,14 @@ curl -X POST https://qnavbackend.vercel.app/api/users/register \
 curl -v -X GET http://localhost:5000/api/get-qr -H "Content-Type: application/json"
 
 ####
-curl -X POST http://localhost:5000/api/questions/find \
+curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/find \
 -H "Content-Type: application/json" \
 -d '{
   "question": "test pertanyaan di hosting"
 }'
 
 ####
-curl -v -X GET http://localhost:5000/api/get-qr -H "Content-Type: application/json"
+curl -v -X GET https://qna-backendv2-production.up.railway.app/api/get-qr -H "Content-Type: application/json"
 
 ####
 curl -v -X GET http://localhost:5000/api/check-auth -H "Content-Type: application/json"
@@ -267,7 +267,7 @@ curl -v -X GET http://localhost:5000/api/status -H "Content-Type: application/js
 
 
 ####
-curl -v -X GET http://localhost:5000/api/debug
+curl -v -X GET https://qna-backendv2-production.up.railway.app/api/debug
 
 
 ####
@@ -316,7 +316,7 @@ curl -X POST http://localhost:5000/api/auth/register \
          }'
 
 ####
-curl -X GET "http://localhost:5000/api/auth/check-verification?whatsapp_number=6281281701539" -H "Content-Type: application/json"
+curl -X GET "https://qna-backendv2-production.up.railway.app/api/auth/check-verification?whatsapp_number=6281281701539" -H "Content-Type: application/json"
 
 ####
 curl -X POST http://localhost:5000/api/group-keywords/add \
