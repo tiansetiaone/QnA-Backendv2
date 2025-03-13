@@ -58,7 +58,7 @@ app.use('/api/translate', translateRoutes);
 
 // CORS options for frontend  
 const corsOptions = {  
-  origin: ['http://localhost:3000', 'https://qna-frontendv2-production.up.railway.app/'],  
+  origin: ['http://localhost:3000', 'https://qna-frontendv2-production.up.railway.app'],  
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  
   credentials: true,  
 };  

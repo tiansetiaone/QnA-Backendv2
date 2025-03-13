@@ -387,7 +387,7 @@ if (message.body.startsWith("!buatlink")) {
 
       // Buat link registrasi
       const serverURL = process.env.FRONTEND_URL || "http://localhost:3000";
-      const registerLink = `${serverURL}/register?token=${token}`;
+      const registerLink = `${serverURL}register?token=${token}`;
 
       // Kirim link ke grup
       await message.reply(`✅ *Link pendaftaran berhasil dibuat!*\n\n📝 *Gunakan link berikut untuk mendaftar:*\n${registerLink}\n\n🔹 Link berlaku hingga: ${expiration.toLocaleString()}`);
@@ -600,7 +600,7 @@ Contoh:
 
           const totalSimilar = similarQuestions[0].total;
           const serverURL = process.env.FRONTEND_URL || "http://localhost:3000";
-          const questionListLink = `${serverURL}/similar-questions?query=${encodeURIComponent(userQuestion)}`;
+          const questionListLink = `${serverURL}similar-questions?query=${encodeURIComponent(userQuestion)}`;
 
           if (totalSimilar > 0) {
               await message.reply(

@@ -257,7 +257,7 @@ curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/find 
 }'
 
 ####
-curl -v -X GET https://qna-backendv2-production.up.railway.app/api/get-qr -H "Content-Type: application/json"
+curl -v -X GET http://localhost:5000/api/get-qr -H "Content-Type: application/json"
 
 ####
 curl -v -X GET http://localhost:5000/api/check-auth -H "Content-Type: application/json"
@@ -367,7 +367,7 @@ curl -X POST http://localhost:5000/api/group-keywords/add \
 ####
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
--d '{"username":"Admin Kece","password":"111"}'
+-d '{"username":"Buser Siang Malam","password":"123456"}'
 
 
 ####
@@ -375,8 +375,8 @@ curl -X GET http://localhost:5000/api/group-keywords/120363371365175527@g.us \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjcsImdyb3VwX2lkIjoiMTIwMzYzMzcxMzY1MTc1NTI3QGcudXMiLCJpYXQiOjE3MzkwNzEzODUsImV4cCI6MTczOTE1Nzc4NX0.lRJ6HRooD8I1MvNAQojWqRTpYR6gMV5a9CVmEm4V3fg"
 
 ####
-curl -X DELETE http://localhost:5000/api/group-keywords/10 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjYsImdyb3VwX2lkIjoiMTIwMzYzMzk2ODY5NzY3NzA0QGcudXMiLCJpYXQiOjE3MzkwNzAzMTksImV4cCI6MTczOTE1NjcxOX0.fFfy0p3uaH2PPuM87PwALmdCXobW1gb8VsuEAkpsDWY"
+curl -X DELETE http://localhost:5000/api/questions/284 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZ3JvdXBfaWQiOiIxMjAzNjMzNzEzNjUxNzU1MjdAZy51cyIsImlhdCI6MTc0MTg2MDQ0NCwiZXhwIjoxNzQxOTQ2ODQ0fQ.hgjAOSPWxKvsM-pVd_Gxkq6K_zRWJnYuIWhHLkp3gwA"
 
 ####
 curl http://localhost:5000/api/status
