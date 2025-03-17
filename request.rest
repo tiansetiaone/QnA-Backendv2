@@ -13,8 +13,8 @@ curl -X POST http://localhost:5000/api/questions/add \
 }'
 
 ####
-curl -X GET http://localhost:5000/api/questions/1/answers \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImlhdCI6MTczNjA1NzIwNiwiZXhwIjoxNzM2MTQzNjA2fQ.teJh8NF-AqnYvrQ8xQZDB3yK0sKnMsn6Cv-sARvhIUk"
+curl -X GET http://localhost:5000/api/questions/281/answers \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZ3JvdXBfaWQiOiIxMjAzNjMzNzEzNjUxNzU1MjdAZy51cyIsImlhdCI6MTc0MTg3OTk1NSwiZXhwIjoxNzQxOTY2MzU1fQ.CLV93inC4On90Dv3vbMmZLY6jgl5E_APNkTeylTCTuk"
 
 
 ####
@@ -49,9 +49,9 @@ curl -X GET http://localhost:5000/api/users/profile \
 curl -X GET https://qna-backendv2.up.railway.app/api/questions/105/answers
 
 ####
-curl -X POST http://localhost:5000/api/answers/127/answers \
+curl -X POST http://localhost:5000/api/answers/281/answers \
 -H "Content-Type: application/json" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsImlhdCI6MTczNjc1NjEzNiwiZXhwIjoxNzM2ODQyNTM2fQ.HPb-9n-knE5jQUq3NPLH0hGcqrP4M74HOfV4v8jUBCA" \
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZ3JvdXBfaWQiOiIxMjAzNjMzNzEzNjUxNzU1MjdAZy51cyIsImlhdCI6MTc0MTg3OTk1NSwiZXhwIjoxNzQxOTY2MzU1fQ.CLV93inC4On90Dv3vbMmZLY6jgl5E_APNkTeylTCTuk" \
 -d '{
 "questionId": 127,
   "answerText": "itu AKUlAH",
@@ -236,7 +236,7 @@ curl -X POST https://qna-backendv2-production.up.railway.app/api/questions/searc
 
 
 ####
-curl -X GET https://qna-backendv2-production.up.railway.app/api/questions \
+curl -X GET http://localhost:5000/api/questions \
 -H "Content-Type: application/json"
 
 
@@ -367,7 +367,7 @@ curl -X POST http://localhost:5000/api/group-keywords/add \
 ####
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
--d '{"username":"Buser Siang Malam","password":"123456"}'
+-d '{"username":"Admin Kece","password":"111"}'
 
 
 ####
