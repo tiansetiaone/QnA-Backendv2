@@ -413,6 +413,67 @@ if (message.body.startsWith("!buatlink")) {
         }
       }
 
+
+      client.on("message_create", async (message) => {
+        console.log(`[DEBUG] Pesan masuk dari: ${message.from}`);
+    
+        // Menangkap pesan bot sendiri di grup
+        const isFromGroup = message.from.endsWith("@g.us") || message.to.endsWith("@g.us");
+        const isBotMessage = message.id.fromMe;
+    
+        console.log(`[DEBUG] isFromGroup: ${isFromGroup}, isBotMessage: ${isBotMessage}`);
+    
+        // Pastikan pesan benar-benar dari grup
+        if (!isFromGroup) {
+            console.log(`[DEBUG] Pesan bukan dari grup, dari: ${message.from}`);
+            return;
+        }
+    
+        if (!message.body.startsWith("!setAdminGroup")) return; // Filter perintah
+    
+        console.log(`[DEBUG] Perintah !setAdminGroup diterima`);
+    
+        const senderNumber = message.author 
+            ? message.author.replace(/\D/g, "") 
+            : message.from.replace(/\D/g, "");
+        const groupId = message.from;
+    
+        console.log(`[DEBUG] Sender Number: ${senderNumber}`);
+        console.log(`[DEBUG] Group ID: ${groupId}`);
+    
+        // Cek apakah pengirim adalah admin
+        const adminCheck = await queryAsync(
+            `SELECT role FROM users WHERE whatsapp_number LIKE ?`,
+            [`%${senderNumber}`]
+        );
+    
+        if (!adminCheck || adminCheck.length === 0 || adminCheck[0].role !== "admin") {
+            await message.reply("⚠️ *Anda tidak memiliki izin untuk mengangkat admin grup.*");
+            return;
+        }
+    
+        // Ambil nomor yang ditandai untuk dijadikan admin_group
+        const mentionedUsers = message.mentionedIds.map(id => id.replace(/\D/g, "")); 
+    
+        if (mentionedUsers.length === 0) {
+            await message.reply("⚠️ *Format salah! Gunakan: !setAdminGroup @nomor*");
+            return;
+        }
+    
+        for (const adminNumber of mentionedUsers) {
+            // Update user menjadi admin_group di database
+            await queryAsync(
+                `UPDATE users SET role = 'admin_group' WHERE whatsapp_number LIKE ?`,
+                [`%${adminNumber}`]
+            );
+    
+            console.log(`[DEBUG] ${adminNumber} sekarang menjadi admin_group di grup ${groupId}`);
+        }
+    
+        await message.reply(`✅ *Admin grup berhasil ditambahkan ke grup ini!*`);
+    });
+    
+    
       if (message.body.startsWith("!setNarasumber")) {
         console.log(`[DEBUG] Perintah !setNarasumber diterima`);
     
@@ -639,94 +700,117 @@ Ketik *lanjut* untuk mengajukan pertanyaan ke narasumber.`
   
  // Fungsi pemilihan narasumber berdasarkan group_id
 async function pilihNarasumber(message, userQuestion, isGroup, senderNumber) {
-  if (!senderNumber) {
-      console.error(`[ERROR] senderNumber tidak tersedia!`);
-      await message.reply("⚠️ *Nomor pengirim tidak ditemukan. Harap coba lagi.*");
-      return;
-  }
-  senderNumber = senderNumber.replace("@c.us", ""); // Format nomor
+    if (!senderNumber) {
+        console.error(`[ERROR] senderNumber tidak tersedia!`);
+        await message.reply("⚠️ *Nomor pengirim tidak ditemukan. Harap coba lagi.*");
+        return;
+    }
+    senderNumber = senderNumber.replace("@c.us", ""); // Format nomor
 
-  console.log(`[DEBUG] Mencari user_id dan group_id untuk nomor: ${senderNumber}`);
-  const userRecord = await queryAsync(
-      `SELECT id, group_id FROM users WHERE whatsapp_number = ?`,
-      [senderNumber]
-  );
+    console.log(`[DEBUG] Mencari user_id dan group_id untuk nomor: ${senderNumber}`);
+    const userRecord = await queryAsync(
+        `SELECT id, group_id FROM users WHERE whatsapp_number = ?`,
+        [senderNumber]
+    );
 
-  if (userRecord.length === 0) {
-      console.error(`[ERROR] Nomor ${senderNumber} tidak ditemukan dalam database.`);
-      await message.reply("⚠️ *Nomor Anda belum terdaftar dalam sistem. Harap hubungi admin.*");
-      return;
-  }
+    if (userRecord.length === 0) {
+        console.error(`[ERROR] Nomor ${senderNumber} tidak ditemukan dalam database.`);
+        await message.reply("⚠️ *Nomor Anda belum terdaftar dalam sistem. Harap hubungi admin.*");
+        return;
+    }
 
-  const userIdFromDB = userRecord[0].id;
-  const userGroupId = userRecord[0].group_id; // Ambil group_id user pengirim
-  console.log(`[DEBUG] user_id ditemukan: ${userIdFromDB}, group_id: ${userGroupId}`);
+    const userIdFromDB = userRecord[0].id;
+    const userGroupId = userRecord[0].group_id; // Ambil group_id user pengirim
+    console.log(`[DEBUG] user_id ditemukan: ${userIdFromDB}, group_id: ${userGroupId}`);
 
-  // Ambil daftar narasumber berdasarkan group_id
-  const narasumberList = await queryAsync(
-    `SELECT id, username, whatsapp_number FROM users WHERE is_narasumber = 1 AND group_id = ?`,
-    [userGroupId]
-);
+    // Ambil daftar narasumber berdasarkan group_id
+    const narasumberList = await queryAsync(
+        `SELECT id, username, whatsapp_number FROM users WHERE is_narasumber = 1 AND group_id = ?`,
+        [userGroupId]
+    );
 
-  if (!narasumberList || narasumberList.length === 0) {
-      await message.reply("⚠️ *Belum ada narasumber yang terdaftar di grup ini.*");
-      return;
-  }
+    if (!narasumberList || narasumberList.length === 0) {
+        await message.reply("⚠️ *Belum ada narasumber yang terdaftar di grup ini.*");
+        return;
+    }
 
-  let narasumberOptions = "👤 *Pilih Narasumber:*\n";
-  narasumberList.forEach((narasumber, index) => {
-      narasumberOptions += `${index + 1}. ${narasumber.username}\n`;
-  });
-  narasumberOptions += "0. Kirim ke semua narasumber\n";
-  narasumberOptions += "\nKetik *nomor narasumber* atau *0* untuk mengirim ke semua.";
+    // Jika hanya ada satu narasumber, langsung kirim pertanyaan tanpa menampilkan pilihan
+    if (narasumberList.length === 1) {
+        const selectedNarasumber = narasumberList[0];
 
-  await message.reply(narasumberOptions);
-
-  client.once("message", async (adminResponseMsg) => {
-      const selectedIndex = parseInt(adminResponseMsg.body) - 1;
-
-      if (selectedIndex === -1) { // Jika user memilih opsi "0"
-        for (const narasumber of narasumberList) {
-            await queryAsync(
-                `INSERT INTO questions (user_id, question_text, status, assigned_to, group_id, created_at, updated_at) 
-                VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
-                [userIdFromDB, userQuestion, narasumber.id, userGroupId]
-            );
-    
-            const formattedNarasumberNumber = formatPhoneNumber(narasumber.whatsapp_number, false);
-            await sendMessageToAdmin(
-                formattedNarasumberNumber,
-                `❓ *Pertanyaan baru dari +${senderNumber}:*\n${userQuestion}`,
-                false
-            );
-        }
-        await message.reply("✅ *Pertanyaan telah dikirim ke semua narasumber di grup ini.*");
-    }else if (selectedIndex >= 0 && selectedIndex < narasumberList.length) {
-          const selectedNarasumber = narasumberList[selectedIndex];
-
-          await queryAsync(
+        await queryAsync(
             `INSERT INTO questions (user_id, question_text, status, assigned_to, group_id, created_at, updated_at) 
             VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
             [userIdFromDB, userQuestion, selectedNarasumber.id, userGroupId]
         );
-        
 
-          await message.reply("✅ *Pertanyaan Anda diterima dan sedang diproses.*");
+        await message.reply("✅ *Pertanyaan Anda diterima dan sedang diproses.*");
 
-          const formattedNarasumberNumber = formatPhoneNumber(selectedNarasumber.whatsapp_number, false);
-          console.log(`[DEBUG] Mengirim pesan ke narasumber: ${formattedNarasumberNumber}`);
+        const formattedNarasumberNumber = formatPhoneNumber(selectedNarasumber.whatsapp_number, false);
+        console.log(`[DEBUG] Mengirim pesan ke narasumber: ${formattedNarasumberNumber}`);
 
-          await sendMessageToAdmin(
-              formattedNarasumberNumber,
-              `❓ *Pertanyaan baru dari +${senderNumber}:*\n\n${userQuestion}`,
-              false
-          );
-      } else {
-          await message.reply("⚠️ *Pilihan narasumber tidak valid.*");
-      }
-  });
+        await sendMessageToAdmin(
+            formattedNarasumberNumber,
+            `❓ *Pertanyaan baru dari +${senderNumber}:*\n\n${userQuestion}`,
+            false
+        );
+
+        return;
+    }
+
+    // Jika lebih dari satu narasumber, tampilkan opsi pemilihan
+    let narasumberOptions = "👤 *Pilih Narasumber:*\n";
+    narasumberList.forEach((narasumber, index) => {
+        narasumberOptions += `${index + 1}. ${narasumber.username}\n`;
+    });
+    narasumberOptions += "0. Kirim ke semua narasumber\n";
+    narasumberOptions += "\nKetik *nomor narasumber* atau *0* untuk mengirim ke semua.";
+
+    await message.reply(narasumberOptions);
+
+    client.once("message", async (adminResponseMsg) => {
+        const selectedIndex = parseInt(adminResponseMsg.body) - 1;
+
+        if (selectedIndex === -1) { // Jika user memilih opsi "0"
+            for (const narasumber of narasumberList) {
+                await queryAsync(
+                    `INSERT INTO questions (user_id, question_text, status, assigned_to, group_id, created_at, updated_at) 
+                    VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
+                    [userIdFromDB, userQuestion, narasumber.id, userGroupId]
+                );
+
+                const formattedNarasumberNumber = formatPhoneNumber(narasumber.whatsapp_number, false);
+                await sendMessageToAdmin(
+                    formattedNarasumberNumber,
+                    `❓ *Pertanyaan baru dari +${senderNumber}:*\n${userQuestion}`,
+                    false
+                );
+            }
+            await message.reply("✅ *Pertanyaan telah dikirim ke semua narasumber di grup ini.*");
+        } else if (selectedIndex >= 0 && selectedIndex < narasumberList.length) {
+            const selectedNarasumber = narasumberList[selectedIndex];
+
+            await queryAsync(
+                `INSERT INTO questions (user_id, question_text, status, assigned_to, group_id, created_at, updated_at) 
+                VALUES (?, ?, 'pending', ?, ?, NOW(), NOW())`,
+                [userIdFromDB, userQuestion, selectedNarasumber.id, userGroupId]
+            );
+
+            await message.reply("✅ *Pertanyaan Anda diterima dan sedang diproses.*");
+
+            const formattedNarasumberNumber = formatPhoneNumber(selectedNarasumber.whatsapp_number, false);
+            console.log(`[DEBUG] Mengirim pesan ke narasumber: ${formattedNarasumberNumber}`);
+
+            await sendMessageToAdmin(
+                formattedNarasumberNumber,
+                `❓ *Pertanyaan baru dari +${senderNumber}:*\n\n${userQuestion}`,
+                false
+            );
+        } else {
+            await message.reply("⚠️ *Pilihan narasumber tidak valid.*");
+        }
+    });
 }
-
 
   client.initialize();
 };
