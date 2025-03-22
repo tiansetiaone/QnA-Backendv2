@@ -398,20 +398,24 @@ if (message.body.startsWith("!buatlink")) {
 }
 
 
-      // Menangani verifikasi manual di grup
-      if (message.body.toLowerCase() === "!verifikasi") {
-        try {
-          const senderNumber = message.author || message.from;
-          const cleanNumber = senderNumber.replace("@c.us", ""); // Hapus domain WA
-          console.log("Nomor yang diverifikasi:", senderNumber); // Debugging
-          verifiedNumbers.add(cleanNumber);
-          console.log("List nomor terverifikasi:", [...verifiedNumbers]); // Debugging
-          client.sendMessage(message.from, "✅ Nomor Anda telah diverifikasi!");
-        } catch (error) {
-          console.error("Error saat memverifikasi nomor:", error);
-          client.sendMessage(message.from, "Terjadi kesalahan saat memproses pesan Anda.");
-        }
-      }
+// Menangani verifikasi manual di grup
+if (message.body.toLowerCase() === "!verifikasi") {
+  try {
+    const senderNumber = message.author || message.from;
+    const cleanNumber = senderNumber.replace("@c.us", ""); // Hapus domain WA
+    console.log("Nomor yang diverifikasi:", senderNumber); // Debugging
+    verifiedNumbers.add(cleanNumber);
+    console.log("List nomor terverifikasi:", [...verifiedNumbers]); // Debugging
+
+    // Format pesan konfirmasi dengan nomor user
+    const verificationMessage = `✅ Nomor Anda *${cleanNumber}* telah terverifikasi di aplikasi QnA!`;
+
+    client.sendMessage(message.from, verificationMessage);
+  } catch (error) {
+    console.error("Error saat memverifikasi nomor:", error);
+    client.sendMessage(message.from, "Terjadi kesalahan saat memproses pesan Anda.");
+  }
+}
 
 
       client.on("message_create", async (message) => {
@@ -947,6 +951,25 @@ const sendMessageToAdmin = async (to, message, isGroup = false) => {
   }
 };
 
+const sendMessageToGroup = async (groupId, message) => {
+  if (!client) {
+    console.error("WhatsApp client belum siap!");
+    return;
+  }
+
+  try {
+    console.log(`Mengirim pesan ke grup: ${groupId}`);
+
+    const response = await client.sendMessage(groupId, message);
+
+    console.log("Pesan ke grup terkirim:", response);
+  } catch (err) {
+    console.error(`Gagal mengirim pesan ke grup ${groupId}:`, err.message);
+    throw err;
+  }
+};
+
+
 const getQR = () => {
   if (isConnected) {
     return { connected: true }; // Jika terhubung, kembalikan status
@@ -958,6 +981,7 @@ module.exports = {
   sendMessageToUser,
   initWhatsAppClient,
   sendMessageToAdmin,
+  sendMessageToGroup,
   isAdmin,
   getQR,
   client,

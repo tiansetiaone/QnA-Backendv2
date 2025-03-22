@@ -1,14 +1,13 @@
 const Answer = require('../models/Answer');
 const Question = require('../models/Question');
 const db = require('../config/db');
-const { sendMessageToUser } = require('../whatsapp/wabot');
+const { sendMessageToUser, sendMessageToGroup } = require('../whatsapp/wabot');
 
 // Fungsi untuk menambahkan jawaban
 exports.addAnswer = (req, res) => {
   const { questionId, answerText, adminId, adminGroup } = req.body;
   console.log('Data diterima di backend:', { questionId, answerText, adminId, adminGroup });
 
-  // Validasi input
   if (!questionId || !answerText) {
     return res.status(400).json({ error: 'Pertanyaan atau jawaban tidak boleh kosong.' });
   }
@@ -17,7 +16,6 @@ exports.addAnswer = (req, res) => {
     return res.status(403).json({ error: 'Anda tidak memiliki izin untuk menjawab pertanyaan.' });
   }
 
-  // Mulai transaksi
   db.getConnection((err, connection) => {
     if (err) {
       console.error('Error saat mendapatkan koneksi:', err);
@@ -31,8 +29,6 @@ exports.addAnswer = (req, res) => {
         return res.status(500).json({ error: 'Gagal memulai transaksi' });
       }
 
-
-      // Tambahkan jawaban ke tabel answers
       const insertAnswerQuery = `
         INSERT INTO answers (question_id, answer_text, admin_id, admin_group, created_at, updated_at) 
         VALUES (?, ?, ?, ?, NOW(), NOW())
@@ -46,10 +42,7 @@ exports.addAnswer = (req, res) => {
           });
         }
 
-        // Perbarui status pertanyaan menjadi 'answered'
-        const updateQuestionStatusQuery = `
-          UPDATE questions SET status = ? WHERE id = ?
-        `;
+        const updateQuestionStatusQuery = `UPDATE questions SET status = ? WHERE id = ?`;
         connection.query(updateQuestionStatusQuery, ['answered', questionId], (updateErr) => {
           if (updateErr) {
             console.error('Error saat memperbarui status pertanyaan:', updateErr);
@@ -59,69 +52,90 @@ exports.addAnswer = (req, res) => {
             });
           }
 
-          // Kirim notifikasi ke WhatsApp user
           const getUserAndAdminQuery = `
-  SELECT 
-    u.whatsapp_number, 
-    u.username, 
-    q.question_text, 
-    q.group_id, 
-    a.answer_text, 
-    a.created_at, 
-    COALESCE(ad.username, ad_group.username, 'Super Admin') AS admin_name, 
-    COALESCE(ad.whatsapp_number, ad_group.whatsapp_number, '') AS admin_phone, 
-    COALESCE(ad_group.username, '') AS admin_group 
-FROM questions q
-JOIN users u ON q.user_id = u.id
-JOIN answers a ON q.id = a.question_id
-LEFT JOIN users ad ON a.admin_id = ad.id 
-LEFT JOIN users ad_group ON a.admin_group = ad_group.id 
-WHERE q.id = ?
-        `;
+            SELECT 
+              u.whatsapp_number, 
+              u.username, 
+              q.question_text, 
+              q.group_id, 
+              a.answer_text, 
+              a.created_at, 
+              COALESCE(ad.username, ad_group.username, 'Super Admin') AS admin_name, 
+              COALESCE(ad.whatsapp_number, ad_group.whatsapp_number, '') AS admin_phone, 
+              COALESCE(ad_group.username, '') AS admin_group 
+            FROM questions q
+            JOIN users u ON q.user_id = u.id
+            JOIN answers a ON q.id = a.question_id
+            LEFT JOIN users ad ON a.admin_id = ad.id 
+            LEFT JOIN users ad_group ON a.admin_group = ad_group.id 
+            WHERE q.id = ?
+          `;
 
-        connection.query(getUserAndAdminQuery, [questionId], (userErr, userResult) => {
-          if (userErr || userResult.length === 0) {
-            console.error('Gagal mendapatkan data pengguna dan pertanyaan:', userErr);
-            return connection.rollback(() => {
-              connection.release();
-              res.status(500).json({ error: 'Gagal mendapatkan data pengguna dan pertanyaan' });
-            });
-          }
+          connection.query(getUserAndAdminQuery, [questionId], async (userErr, userResult) => {
+            if (userErr || userResult.length === 0) {
+              console.error('Gagal mendapatkan data pengguna dan pertanyaan:', userErr);
+              return connection.rollback(() => {
+                connection.release();
+                res.status(500).json({ error: 'Gagal mendapatkan data pengguna dan pertanyaan' });
+              });
+            }
 
-          const {
-            whatsapp_number: userPhoneNumber,
-            username,
-            question_text: questionText,
-            group_id: groupId,
-            answer_text: answerText,
-            created_at: answerTime,
-            admin_name: adminName,
-            admin_phone: adminPhone,
-            admin_group: adminGroup
-          } = userResult[0];
-          
-          const formattedAnswerTime = new Date(answerTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-          
-          const message = `
+            const {
+              whatsapp_number: userPhoneNumber,
+              username,
+              question_text: questionText,
+              group_id: groupId,
+              answer_text: answerText,
+              created_at: answerTime,
+              admin_name: adminName,
+              admin_phone: adminPhone,
+              admin_group: adminGroup
+            } = userResult[0];
+
+            const formattedAnswerTime = new Date(answerTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+            const message = `
 Halo ${username},
 
-Pertanyaan Anda:
+📌 *Pertanyaan Anda:*
 "${questionText}"
 
-Jawaban dari narasumber:
+✅ *Jawaban dari narasumber:*
 "${answerText}"
 
-📌 Narasumber : ${adminName || adminGroup || 'Tidak diketahui'}
-📞 Nomor : ${adminPhone || 'Tidak tersedia'}
-📅 Waktu : ${formattedAnswerTime}
+📌 *Narasumber:* ${adminName || adminGroup || 'Tidak diketahui'}
+📞 *Nomor:* ${adminPhone || 'Tidak tersedia'}
+📅 *Waktu:* ${formattedAnswerTime}
 
 Terima kasih atas pertanyaan Anda!
-`.trim();
+            `.trim();
 
+            try {
+              // Kirim ke user
+              await sendMessageToUser(userPhoneNumber, message);
+              console.log(`Notifikasi berhasil dikirim ke user: ${userPhoneNumber}`);
 
-          sendMessageToUser(userPhoneNumber, message)
-            .then(() => {
-              console.log(`Notifikasi berhasil dikirim ke WhatsApp: ${userPhoneNumber}`);
+              // Kirim ke grup jika pertanyaan diajukan di grup
+              if (groupId) {
+                const groupMessage = `
+📢 *Jawaban atas pertanyaan di grup ini*:
+
+👤 *Dari:* ${username}
+❓ *Pertanyaan:* "${questionText}"
+
+✅ *Jawaban:* 
+"${answerText}"
+
+📌 *Narasumber:* ${adminName || adminGroup || 'Tidak diketahui'}
+📅 *Waktu:* ${formattedAnswerTime}
+
+*Terima kasih telah menggunakan layanan QnA!*
+                `.trim();
+
+                await sendMessageToGroup(groupId, groupMessage);
+                console.log(`Notifikasi berhasil dikirim ke grup: ${groupId}`);
+              }
+
               connection.commit((commitErr) => {
                 if (commitErr) {
                   console.error('Error saat melakukan commit:', commitErr);
@@ -133,24 +147,25 @@ Terima kasih atas pertanyaan Anda!
 
                 connection.release();
                 res.status(201).json({
-                  message: 'Jawaban berhasil ditambahkan dan notifikasi dikirim ke pengguna.',
+                  message: 'Jawaban berhasil ditambahkan dan notifikasi dikirim.',
                   answerId: insertResult.insertId,
                 });
               });
-            })
-            .catch((error) => {
+            } catch (error) {
               console.error('Gagal mengirim pesan WhatsApp:', error);
               connection.rollback(() => {
                 connection.release();
                 res.status(500).json({ error: 'Gagal mengirim notifikasi WhatsApp' });
               });
-            });
+            }
+          });
         });
       });
     });
   });
-});
 };
+
+
 
 
 // Fungsi untuk mendapatkan jawaban berdasarkan questionId
