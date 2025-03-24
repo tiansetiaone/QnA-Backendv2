@@ -453,7 +453,6 @@ if (message.body.toLowerCase() === "!verifikasi") {
     
         if (!adminCheck || adminCheck.length === 0 || adminCheck[0].role !== "admin") {
             await message.reply("⚠️ *Anda tidak memiliki izin untuk mengangkat admin grup.*");
-            return;
         }
     
         // Ambil nomor yang ditandai untuk dijadikan admin_group
@@ -474,57 +473,56 @@ if (message.body.toLowerCase() === "!verifikasi") {
             console.log(`[DEBUG] ${adminNumber} sekarang menjadi admin_group di grup ${groupId}`);
         }
     
-        await message.reply(`✅ *Admin grup berhasil ditambahkan ke grup ini!*`);
+        await message.reply(`✅ *akun ${adminNumber} sekarang sebagai Admin grup!*`);
     });
     
     
-      if (message.body.startsWith("!setNarasumber")) {
-        console.log(`[DEBUG] Perintah !setNarasumber diterima`);
-    
-        if (!message.from.endsWith("@g.us")) {
-            await message.reply("❌ *Perintah ini hanya dapat dijalankan di dalam grup.*");
-            return;
-        }
-    
-        const senderNumber = message.author.replace(/\D/g, ""); // Nomor pengirim
-        const groupId = message.from; // ID grup WhatsApp
-    
-        // Cek apakah pengirim adalah admin_group
-        const adminCheck = await queryAsync(
-            `SELECT group_id FROM users WHERE whatsapp_number LIKE ?`,
-            [`%${senderNumber}`]
-        );
-    
-        if (!adminCheck || adminCheck.length === 0) {
-            await message.reply("⚠️ *Anda tidak memiliki izin untuk mengatur narasumber.*");
-            return;
-        }
-    
-        const adminGroupId = adminCheck[0].group_id; // Ambil group_id dari admin_group
-    
-        // Ambil nomor yang ditandai sebagai narasumber dari pesan
-        const mentionedUsers = message.mentionedIds.map(id => id.replace(/\D/g, "")); 
-    
-        if (mentionedUsers.length === 0) {
-            await message.reply("⚠️ *Format salah! Gunakan: !setNarasumber @nomor*");
-            return;
-        }
-    
-        for (const narasumberNumber of mentionedUsers) {
-            // Update user menjadi narasumber & set group_id sama seperti admin_group
-            await queryAsync(
-                `UPDATE users SET is_narasumber = 1, group_id = ? WHERE whatsapp_number LIKE ?`,
-                [adminGroupId, `%${narasumberNumber}`]
-            );
-    
-            console.log(`[DEBUG] ${narasumberNumber} sekarang menjadi narasumber di grup ${adminGroupId}`);
-        }
-    
-        await message.reply(`✅ *Narasumber berhasil ditambahkan ke grup ini!*`);
-    }
-    
-
-    if (message.body.startsWith("!hapusNarasumber")) {
+    if (message.body.startsWith("!setNarasumber")) {
+      console.log(`[DEBUG] Perintah !setNarasumber diterima`);
+  
+      if (!message.from.endsWith("@g.us")) {
+          await message.reply("❌ *Perintah ini hanya dapat dijalankan di dalam grup.*");
+          return;
+      }
+  
+      const senderNumber = message.author.replace(/\D/g, ""); // Nomor pengirim
+      const groupId = message.from; // ID grup WhatsApp
+  
+      // Cek apakah pengirim adalah admin_group
+      const adminCheck = await queryAsync(
+          `SELECT group_id FROM users WHERE whatsapp_number LIKE ?`,
+          [`%${senderNumber}`]
+      );
+  
+      if (!adminCheck || adminCheck.length === 0) {
+          await message.reply("⚠️ *Anda tidak memiliki izin untuk mengatur narasumber.*");
+          return;
+      }
+  
+      const adminGroupId = adminCheck[0].group_id; // Ambil group_id dari admin_group
+  
+      // Ambil nomor yang ditandai sebagai narasumber dari pesan
+      const mentionedUsers = message.mentionedIds.map(id => id.replace(/\D/g, "")); 
+  
+      if (mentionedUsers.length === 0) {
+          await message.reply("⚠️ *Format salah! Gunakan: !setNarasumber @nomor*");
+          return;
+      }
+  
+      for (const narasumberNumber of mentionedUsers) {
+          // Update user menjadi narasumber & set role sebagai admin_group
+          await queryAsync(
+              `UPDATE users SET is_narasumber = 1, role = 'admin_group', group_id = ? WHERE whatsapp_number LIKE ?`,
+              [adminGroupId, `%${narasumberNumber}`]
+          );
+  
+          console.log(`[DEBUG] ${narasumberNumber} sekarang menjadi narasumber dan admin_group di grup ${adminGroupId}`);
+      }
+  
+      await message.reply(`✅ *Narasumber ${narasumberNumber} berhasil ditambahkan ke grup ini*`);
+  }
+  
+  if (message.body.startsWith("!hapusNarasumber")) {
       console.log(`[DEBUG] Perintah !hapusNarasumber diterima`);
   
       if (!message.from.endsWith("@g.us")) {
@@ -557,17 +555,18 @@ if (message.body.toLowerCase() === "!verifikasi") {
       }
   
       for (const narasumberNumber of mentionedUsers) {
-          // Hapus status narasumber & bisa reset group_id jika diperlukan
+          // Hapus status narasumber & ubah role kembali ke user
           await queryAsync(
-              `UPDATE users SET is_narasumber = 0 WHERE whatsapp_number LIKE ? AND group_id = ?`,
+              `UPDATE users SET is_narasumber = 0, role = 'user' WHERE whatsapp_number LIKE ? AND group_id = ?`,
               [`%${narasumberNumber}`, adminGroupId]
           );
   
-          console.log(`[DEBUG] ${narasumberNumber} bukan lagi narasumber di grup ${adminGroupId}`);
+          console.log(`[DEBUG] ${narasumberNumber} bukan lagi narasumber dan perannya kembali menjadi user di grup ${adminGroupId}`);
       }
   
-      await message.reply(`✅ *Narasumber berhasil dihapus dari grup ini!*`);
+      await message.reply(`✅ *Narasumber ${narasumberNumber} berhasil dihapus dari grup ini!*`);
   }
+  
   
   
      // **Perintah untuk mengatur sesi (Admin Group Only)**

@@ -1,32 +1,32 @@
-const Answer = require('../models/Answer');
-const Question = require('../models/Question');
-const db = require('../config/db');
-const { sendMessageToUser, sendMessageToGroup } = require('../whatsapp/wabot');
+const Answer = require("../models/Answer");
+const Question = require("../models/Question");
+const db = require("../config/db");
+const { sendMessageToUser, sendMessageToGroup } = require("../whatsapp/wabot");
 
 // Fungsi untuk menambahkan jawaban
 exports.addAnswer = (req, res) => {
   const { questionId, answerText, adminId, adminGroup } = req.body;
-  console.log('Data diterima di backend:', { questionId, answerText, adminId, adminGroup });
+  console.log("Data diterima di backend:", { questionId, answerText, adminId, adminGroup });
 
   if (!questionId || !answerText) {
-    return res.status(400).json({ error: 'Pertanyaan atau jawaban tidak boleh kosong.' });
+    return res.status(400).json({ error: "Pertanyaan atau jawaban tidak boleh kosong." });
   }
 
   if (!adminId && !adminGroup) {
-    return res.status(403).json({ error: 'Anda tidak memiliki izin untuk menjawab pertanyaan.' });
+    return res.status(403).json({ error: "Anda tidak memiliki izin untuk menjawab pertanyaan." });
   }
 
   db.getConnection((err, connection) => {
     if (err) {
-      console.error('Error saat mendapatkan koneksi:', err);
-      return res.status(500).json({ error: 'Gagal mendapatkan koneksi database' });
+      console.error("Error saat mendapatkan koneksi:", err);
+      return res.status(500).json({ error: "Gagal mendapatkan koneksi database" });
     }
 
     connection.beginTransaction((transactionErr) => {
       if (transactionErr) {
-        console.error('Error saat memulai transaksi:', transactionErr);
+        console.error("Error saat memulai transaksi:", transactionErr);
         connection.release();
-        return res.status(500).json({ error: 'Gagal memulai transaksi' });
+        return res.status(500).json({ error: "Gagal memulai transaksi" });
       }
 
       const insertAnswerQuery = `
@@ -35,20 +35,20 @@ exports.addAnswer = (req, res) => {
       `;
       connection.query(insertAnswerQuery, [questionId, answerText, adminId, adminGroup], (insertErr, insertResult) => {
         if (insertErr) {
-          console.error('Error saat menambahkan jawaban:', insertErr);
+          console.error("Error saat menambahkan jawaban:", insertErr);
           return connection.rollback(() => {
             connection.release();
-            res.status(500).json({ error: 'Gagal menambahkan jawaban' });
+            res.status(500).json({ error: "Gagal menambahkan jawaban" });
           });
         }
 
         const updateQuestionStatusQuery = `UPDATE questions SET status = ? WHERE id = ?`;
-        connection.query(updateQuestionStatusQuery, ['answered', questionId], (updateErr) => {
+        connection.query(updateQuestionStatusQuery, ["answered", questionId], (updateErr) => {
           if (updateErr) {
-            console.error('Error saat memperbarui status pertanyaan:', updateErr);
+            console.error("Error saat memperbarui status pertanyaan:", updateErr);
             return connection.rollback(() => {
               connection.release();
-              res.status(500).json({ error: 'Gagal memperbarui status pertanyaan' });
+              res.status(500).json({ error: "Gagal memperbarui status pertanyaan" });
             });
           }
 
@@ -73,10 +73,10 @@ exports.addAnswer = (req, res) => {
 
           connection.query(getUserAndAdminQuery, [questionId], async (userErr, userResult) => {
             if (userErr || userResult.length === 0) {
-              console.error('Gagal mendapatkan data pengguna dan pertanyaan:', userErr);
+              console.error("Gagal mendapatkan data pengguna dan pertanyaan:", userErr);
               return connection.rollback(() => {
                 connection.release();
-                res.status(500).json({ error: 'Gagal mendapatkan data pengguna dan pertanyaan' });
+                res.status(500).json({ error: "Gagal mendapatkan data pengguna dan pertanyaan" });
               });
             }
 
@@ -89,13 +89,26 @@ exports.addAnswer = (req, res) => {
               created_at: answerTime,
               admin_name: adminName,
               admin_phone: adminPhone,
-              admin_group: adminGroup
+              admin_group: adminGroup,
             } = userResult[0];
 
-            const formattedAnswerTime = new Date(answerTime).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+            const formattedAnswerTime = new Date(answerTime)
+              .toLocaleString("id-ID", {
+                timeZone: "Asia/Jakarta",
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              })
+              .replace(/\./g, ":"); // Mengganti titik (.) dengan titik dua (:)
+
+            console.log(formattedAnswerTime);
 
             const message = `
-Halo ${username},
+Halo ${username} ${userPhoneNumber},
 
 📌 *Pertanyaan Anda:*
 "${questionText}"
@@ -103,8 +116,8 @@ Halo ${username},
 ✅ *Jawaban dari narasumber:*
 "${answerText}"
 
-📌 *Narasumber:* ${adminName || adminGroup || 'Tidak diketahui'}
-📞 *Nomor:* ${adminPhone || 'Tidak tersedia'}
+📌 *Narasumber:* ${adminName || adminGroup || "Tidak diketahui"}
+📞 *Nomor:* ${adminPhone || "Tidak tersedia"}
 📅 *Waktu:* ${formattedAnswerTime}
 
 Terima kasih atas pertanyaan Anda!
@@ -120,13 +133,14 @@ Terima kasih atas pertanyaan Anda!
                 const groupMessage = `
 📢 *Jawaban atas pertanyaan di grup ini*:
 
-👤 *Dari:* ${username}
+👤 *Dari:* ${username} ${userPhoneNumber},
 ❓ *Pertanyaan:* "${questionText}"
 
 ✅ *Jawaban:* 
 "${answerText}"
 
-📌 *Narasumber:* ${adminName || adminGroup || 'Tidak diketahui'}
+📌 *Narasumber:* ${adminName || adminGroup || "Tidak diketahui"}
+📞 *Nomor:* ${adminPhone || "Tidak tersedia"}
 📅 *Waktu:* ${formattedAnswerTime}
 
 *Terima kasih telah menggunakan layanan QnA!*
@@ -138,24 +152,24 @@ Terima kasih atas pertanyaan Anda!
 
               connection.commit((commitErr) => {
                 if (commitErr) {
-                  console.error('Error saat melakukan commit:', commitErr);
+                  console.error("Error saat melakukan commit:", commitErr);
                   return connection.rollback(() => {
                     connection.release();
-                    res.status(500).json({ error: 'Gagal menyelesaikan transaksi' });
+                    res.status(500).json({ error: "Gagal menyelesaikan transaksi" });
                   });
                 }
 
                 connection.release();
                 res.status(201).json({
-                  message: 'Jawaban berhasil ditambahkan dan notifikasi dikirim.',
+                  message: "Jawaban berhasil ditambahkan dan notifikasi dikirim.",
                   answerId: insertResult.insertId,
                 });
               });
             } catch (error) {
-              console.error('Gagal mengirim pesan WhatsApp:', error);
+              console.error("Gagal mengirim pesan WhatsApp:", error);
               connection.rollback(() => {
                 connection.release();
-                res.status(500).json({ error: 'Gagal mengirim notifikasi WhatsApp' });
+                res.status(500).json({ error: "Gagal mengirim notifikasi WhatsApp" });
               });
             }
           });
@@ -165,17 +179,14 @@ Terima kasih atas pertanyaan Anda!
   });
 };
 
-
-
-
 // Fungsi untuk mendapatkan jawaban berdasarkan questionId
 exports.getAnswers = (req, res) => {
   const { questionId } = req.params;
-  console.log('Question ID:', questionId);
+  console.log("Question ID:", questionId);
 
   Question.getAnswersByQuestionId(questionId, (err, answers) => {
     if (err) {
-      return res.status(500).json({ error: 'Terjadi kesalahan saat mengambil jawaban' });
+      return res.status(500).json({ error: "Terjadi kesalahan saat mengambil jawaban" });
     }
 
     if (answers.error) {
