@@ -453,6 +453,7 @@ if (message.body.toLowerCase() === "!verifikasi") {
     
         if (!adminCheck || adminCheck.length === 0 || adminCheck[0].role !== "admin") {
             await message.reply("⚠️ *Anda tidak memiliki izin untuk mengangkat admin grup.*");
+            return;
         }
     
         // Ambil nomor yang ditandai untuk dijadikan admin_group
@@ -473,7 +474,7 @@ if (message.body.toLowerCase() === "!verifikasi") {
             console.log(`[DEBUG] ${adminNumber} sekarang menjadi admin_group di grup ${groupId}`);
         }
     
-        await message.reply(`✅ *akun ${adminNumber} sekarang sebagai Admin grup!*`);
+        await message.reply(`✅ *akun sekarang sebagai Admin grup!*`);
     });
     
     
@@ -519,7 +520,7 @@ if (message.body.toLowerCase() === "!verifikasi") {
           console.log(`[DEBUG] ${narasumberNumber} sekarang menjadi narasumber dan admin_group di grup ${adminGroupId}`);
       }
   
-      await message.reply(`✅ *Narasumber ${narasumberNumber} berhasil ditambahkan ke grup ini*`);
+      await message.reply(`✅ *Narasumber berhasil ditambahkan ke grup ini*`);
   }
   
   if (message.body.startsWith("!hapusNarasumber")) {
@@ -564,7 +565,7 @@ if (message.body.toLowerCase() === "!verifikasi") {
           console.log(`[DEBUG] ${narasumberNumber} bukan lagi narasumber dan perannya kembali menjadi user di grup ${adminGroupId}`);
       }
   
-      await message.reply(`✅ *Narasumber ${narasumberNumber} berhasil dihapus dari grup ini!*`);
+      await message.reply(`✅ *Narasumber berhasil dihapus dari grup ini!*`);
   }
   
   
