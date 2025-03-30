@@ -28,7 +28,7 @@ curl -X POST http://localhost:5000/api/questions/add -H "Content-Type: applicati
 ####
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
--d '{"username":"narsum3","password":"123456"}'
+-d '{"username":"Setiaone13","password":"123"}'
 
 ####
 curl -X POST http://localhost:5000/api/questions/add \
@@ -39,7 +39,7 @@ curl -X POST http://localhost:5000/api/questions/add \
 ####
 curl -X GET http://localhost:5000/api/questions/ \
 -H "Content-Type: application/json" \
--H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZ3JvdXBfaWQiOiIxMjAzNjMzNzEzNjUxNzU1MjdAZy51cyIsImlhdCI6MTc0MTI4Mzc1MywiZXhwIjoxNzQxMzcwMTUzfQ.FkuTg8Jszei23Y45m3ALKcl11_j_Lu8Slx34aHmqB9o"
+-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzQsImdyb3VwX2lkIjoiMTIwMzYzMzcxMzY1MTc1NTI3QGcudXMiLCJpYXQiOjE3NDMzNDMzNDAsImV4cCI6MTc0MzQyOTc0MH0.KOLKm2vMuGPr9LHBeCkse_SvzSHVko5QtnmJdjY2_zw"
 
 ####
 curl -X GET http://localhost:5000/api/users/profile \
@@ -367,7 +367,7 @@ curl -X POST http://localhost:5000/api/group-keywords/add \
 ####
 curl -X POST http://localhost:5000/api/auth/login \
 -H "Content-Type: application/json" \
--d '{"username":"Admin Kece","password":"111"}'
+-d '{"username":"tiansetiaone13","password":"123"}'
 
 
 ####
